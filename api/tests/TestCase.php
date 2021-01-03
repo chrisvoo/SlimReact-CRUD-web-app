@@ -3,16 +3,17 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use DI\ContainerBuilder;
+use App\Application\SlimApp;
 use Exception;
 use PHPUnit\Framework\TestCase as PHPUnit_TestCase;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
-use Slim\Factory\AppFactory;
+use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Psr7\Factory\StreamFactory;
 use Slim\Psr7\Headers;
 use Slim\Psr7\Request as SlimRequest;
 use Slim\Psr7\Uri;
+use PDO;
 
 class TestCase extends PHPUnit_TestCase
 {
@@ -22,58 +23,52 @@ class TestCase extends PHPUnit_TestCase
      */
     protected function getAppInstance(): App
     {
-        // Instantiate PHP-DI ContainerBuilder
-        $containerBuilder = new ContainerBuilder();
+        $app = (new SlimApp())->getAppInstance();
 
-        // Container intentionally not compiled for tests.
-
-        // Set up settings
-        $settings = require __DIR__ . '/../app/settings.php';
-        $settings($containerBuilder);
-
-        // Set up dependencies
-        $dependencies = require __DIR__ . '/../app/dependencies.php';
-        $dependencies($containerBuilder);
-
-        // Set up repositories
-        $repositories = require __DIR__ . '/../app/repositories.php';
-        $repositories($containerBuilder);
-
-        // Build PHP-DI Container instance
-        $container = $containerBuilder->build();
-
-        // Instantiate the app
-        AppFactory::setContainer($container);
-        $app = AppFactory::create();
-
-        // Register middleware
-        $middleware = require __DIR__ . '/../app/middleware.php';
-        $middleware($app);
-
-        // Register routes
-        $routes = require __DIR__ . '/../app/routes.php';
-        $routes($app);
+        $setupTestsSql = file_get_contents(__DIR__ . "/../scripts/setup_tests.sql");
+        /**
+         * @var PDO $pdo
+         */
+        $pdo = $app->getContainer()->get(PDO::class);
+        $statements = preg_split("/;/", $setupTestsSql);
+        foreach ($statements as $statement) {
+            if (trim($statement) === "") {
+                continue;
+            }
+            $pdo->exec($statement);
+        }
 
         return $app;
     }
 
     /**
+     * It parses the response as JSON.
+     *
+     * @param Response $response The response.
+     * @return mixed The associative array.
+     */
+    protected function parseJson(Response $response)
+    {
+        $payload = (string) $response->getBody();
+        return json_decode($payload, true);
+    }
+
+    /**
      * @param string $method
      * @param string $path
-     * @param array  $headers
-     * @param array  $cookies
-     * @param array  $serverParams
      * @return Request
      */
     protected function createRequest(
         string $method,
-        string $path,
-        array $headers = ['HTTP_ACCEPT' => 'application/json'],
-        array $cookies = [],
-        array $serverParams = []
+        string $path
     ): Request {
-        $uri = new Uri('', '', 80, $path);
+        $uri = new Uri('', '', 8080, $path);
         $handle = fopen('php://temp', 'w+');
+        $headers = [
+            'HTTP_ACCEPT' => 'application/json',
+        ];
+        $serverParams = [];
+        $cookies = [];
         $stream = (new StreamFactory())->createStreamFromResource($handle);
 
         $h = new Headers();
@@ -82,5 +77,37 @@ class TestCase extends PHPUnit_TestCase
         }
 
         return new SlimRequest($method, $uri, $h, $cookies, $serverParams, $stream);
+    }
+
+    /**
+     * It creates/updates a new entity.
+     *
+     * @param string $method
+     * @param string $path
+     * @param array $data The JSON body.
+     * @return Request
+     */
+    protected function createJSONRequest(
+        string $method,
+        string $path,
+        array $data
+    ): Request {
+        $uri = new Uri('', '', 8080, $path);
+        $handle = fopen('php://temp', 'w+');
+        $headers = [
+            'accept' => 'application/json',
+            "Content-type" => "application/json;charset=utf-8"
+        ];
+        $serverParams = [];
+        $cookies = [];
+        $stream = (new StreamFactory())->createStreamFromResource($handle);
+
+        $h = new Headers();
+        foreach ($headers as $name => $value) {
+            $h->addHeader($name, $value);
+        }
+
+        $req = new SlimRequest($method, $uri, $h, $cookies, $serverParams, $stream);
+        return $req->withParsedBody($data);
     }
 }

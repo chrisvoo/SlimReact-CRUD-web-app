@@ -1,0 +1,6 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Everything must be redirected to index, so that even if a user points the browser to an
+  # existing file, he will get a 404
+  RewriteRule ^.*$ index.php [QSA,L]
+</IfModule>

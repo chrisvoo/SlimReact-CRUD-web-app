@@ -1,28 +1,26 @@
 <?php
 declare(strict_types=1);
 
-use App\Application\Actions\User\ListUsersAction;
-use App\Application\Actions\User\ViewUserAction;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Application\Controllers\DepartmentController;
+use App\Application\Controllers\EmployeeController;
 use Slim\App;
 use Slim\Interfaces\RouteCollectorProxyInterface as Group;
 
 return function (App $app) {
-    $basePath = $_ENV["APP_BASE_PATH"];
+   $app->get('/departments', DepartmentController::class . ":list");
+   $app->get('/employees', EmployeeController::class . ":list");
 
-    $app->options("/$basePath{routes:.*}", function (Request $request, Response $response) {
-        // CORS Pre-Flight OPTIONS Request Handler
-        return $response;
-    });
+   $app->group("/employee", function (Group $group) {
+       $group->get('/{id}', EmployeeController::class . ":getById");
+       $group->post('', EmployeeController::class . ":create");     // new employee
+       $group->put('/{id}', EmployeeController::class . ":update"); // update
+       $group->delete('/{id}', EmployeeController::class . ":delete");
+   });
 
-    $app->get($basePath, function (Request $request, Response $response) {
-        $response->getBody()->write('Hello world!');
-        return $response;
-    });
-
-    $app->group("$basePath/users", function (Group $group) {
-        $group->get('', ListUsersAction::class);
-        $group->get('/{id}', ViewUserAction::class);
-    });
+   $app->group("/department", function (Group $group) {
+       $group->get('/{id}', DepartmentController::class . ":getById");
+       $group->post('', DepartmentController::class . ":create");     // new employee
+       $group->put('/{id}', DepartmentController::class . ":update"); // update
+       $group->delete('/{id}', DepartmentController::class . ":delete");
+   });
 };

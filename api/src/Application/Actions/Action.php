@@ -99,6 +99,7 @@ abstract class Action
 
     /**
      * @param  array|object|null $data
+     * @param  int               $statusCode HTTP status.
      * @return Response
      */
     protected function respondWithData($data = null, int $statusCode = 200): Response
