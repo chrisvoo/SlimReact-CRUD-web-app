@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use App\Application\Controllers\DepartmentController;
+use App\Application\Controllers\DepartmentsReportsController;
 use App\Application\Controllers\EmployeeController;
 use Slim\App;
 use Slim\Interfaces\RouteCollectorProxyInterface as Group;
@@ -23,4 +24,9 @@ return function (App $app) {
        $group->put('/{id}', DepartmentController::class . ":update"); // update
        $group->delete('/{id}', DepartmentController::class . ":delete");
    });
+
+    $app->group("/report", function (Group $group) {
+        $group->get("/highest_salaries", DepartmentsReportsController::class . ":getHighestSalaries");
+        $group->get("/expensive_departments", DepartmentsReportsController::class . ":getExpensiveDepartments");
+    });
 };

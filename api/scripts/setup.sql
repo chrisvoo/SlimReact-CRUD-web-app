@@ -45,15 +45,15 @@ INSERT INTO employee(id, first_name, last_name, salary, department_id) VALUES
   (6, 'Jack', 'Black', 52600.23, 1),
   (7, 'John', 'Petrucci', 71000, 1);
 
-CREATE OR REPLACE VIEW highest_salary AS
-SELECT d.name, MAX(COALESCE(e.salary,0))
+CREATE OR REPLACE VIEW highest_salaries AS
+SELECT d.name, MAX(COALESCE(e.salary,0)) as num_employees
 FROM department d
   LEFT JOIN employee e ON (d.id = e.department_id)
 GROUP BY d.name;
 
 CREATE OR REPLACE VIEW expensive_departments AS
-SELECT d.name, SUM(CASE WHEN e.salary > 50000 THEN 1 ELSE 0 END) as wealthy_employees
+SELECT d.name, SUM(CASE WHEN e.salary > 50000 THEN 1 ELSE 0 END) as num_employees
 FROM department d
  LEFT JOIN employee e ON (d.id = e.department_id)
 GROUP BY d.name
-HAVING wealthy_employees > 2
+HAVING num_employees > 2

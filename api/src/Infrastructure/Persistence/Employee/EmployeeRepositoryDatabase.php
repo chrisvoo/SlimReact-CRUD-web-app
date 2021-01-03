@@ -7,7 +7,6 @@ use App\Domain\DomainException\InvalidEntityException;
 use App\Domain\Employee\Employee;
 use App\Infrastructure\Persistence\DatabaseException;
 use App\Infrastructure\Persistence\TableMapper;
-use Exception;
 use PDO;
 use App\Domain\Employee\EmployeeNotFoundException;
 use App\Domain\Employee\EmployeeRepository;
