@@ -42,6 +42,7 @@
         "react/jsx-one-expression-per-line": "off",
         "jsx-a11y/label-has-associated-control": "off",
         "jsx-a11y/no-autofocus": "off",
-        "max-len": "off"
+        "max-len": "off",
+        "camelcase": "off"
     }
 }
