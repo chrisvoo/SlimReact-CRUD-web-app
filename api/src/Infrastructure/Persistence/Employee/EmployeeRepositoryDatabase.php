@@ -20,9 +20,20 @@ class EmployeeRepositoryDatabase implements EmployeeRepository
      */
     private $pdo;
 
+    /**
+     * SQL join.
+     *
+     * @var string
+     */
+    private $sqlDepartmentJoin;
+
     public function __construct(PDO $pdoClass)
     {
         $this->pdo = $pdoClass;
+        $this->sqlDepartmentJoin =
+            "SELECT e.id, e.first_name, e.last_name, e.salary, e.department_id, d.name AS depName
+               FROM " . TableMapper::EMPLOYEE() . " e 
+                JOIN " . TableMapper::DEPARTMENT() . " d ON d.id = e.department_id ";
     }
 
     /**
@@ -32,7 +43,8 @@ class EmployeeRepositoryDatabase implements EmployeeRepository
      */
     public function findAll(): array
     {
-        $statement = $this->pdo->query("SELECT * FROM " . TableMapper::EMPLOYEE());
+        $statement = $this->pdo->query($this->sqlDepartmentJoin);
+
         $employees = [];
 
         while ($row = $statement->fetch()) {
@@ -43,6 +55,7 @@ class EmployeeRepositoryDatabase implements EmployeeRepository
                     "lastName" => $row["last_name"],
                     "salary" => $row["salary"],
                     "departmentId" => $row["department_id"],
+                    "departmentName" => $row["depName"],
                 ]
             ));
         }
@@ -59,7 +72,7 @@ class EmployeeRepositoryDatabase implements EmployeeRepository
      */
     public function findEmployeeById(int $id): Employee
     {
-        $statement = $this->pdo->prepare("SELECT * FROM " . TableMapper::EMPLOYEE() . " WHERE id = :id");
+        $statement = $this->pdo->prepare($this->sqlDepartmentJoin . " WHERE e.id = :id");
         $statement->execute([
             "id" => $id
         ]);
@@ -75,6 +88,7 @@ class EmployeeRepositoryDatabase implements EmployeeRepository
             "lastName" => $data[0]["last_name"],
             "salary" => $data[0]["salary"],
             "departmentId" => $data[0]["department_id"],
+            "departmentName" => $data[0]["depName"],
         ]);
     }
 

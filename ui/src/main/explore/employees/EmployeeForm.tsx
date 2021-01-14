@@ -1,23 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Container, Row, Col, Card, Button, Form,
+  Container, Row, Col, Card, Button, Form, Alert,
 } from 'react-bootstrap';
-import { EmployeeState } from '../../../types/DomainTypes';
+import axios from 'axios';
+import { Redirect, useLocation } from 'react-router-dom';
+import { useForm /* , Controller */ } from 'react-hook-form';
+import { Employee, Department } from '../../../types/DomainTypes';
+import ApiCalls from '../../shared/ApiCalls';
 
-export function EmployeeForm(data?: Partial<EmployeeState>) {
-  const [employee, setEmployee] = useState(data);
+export function EmployeeForm() {
+  const [isLoading, setLoading] = useState(false);
+  const [successSubmit, setSuccessSubmit] = useState(false);
+  const [errorResponse, setErrorResponse] = useState({ error: false, description: '' });
+  const [departments, setDepartments] = useState([]);
+  const { pathname } = useLocation();
+  const {
+    handleSubmit, register, errors, setValue,
+  } = useForm();
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { target } = event;
-    const { name } = target;
-    const { value } = target;
+  const lastRouteParam = pathname.substring(pathname.lastIndexOf('/') + 1);
 
-    const employeeState: Partial<EmployeeState> = {
-      [name]: value,
-    };
+  useEffect(() => {
+    if (lastRouteParam !== 'create') {
+      ApiCalls.getEmployee(lastRouteParam,
+        (response: any) => {
+          setValue('name', response.data.name);
+          setValue('id', lastRouteParam);
+        },
+        (error: Error) => {
+          setErrorResponse({
+            error: true,
+            description: error.message,
+          });
+        });
+    }
 
-    setEmployee(employeeState);
+    ApiCalls.getDepartments(
+      (result) => setDepartments(result.data),
+      (error: Error) => {
+        setErrorResponse({
+          error: true,
+          description: error.message,
+        });
+      },
+    );
+  }, []);
+
+  // eslint-disable-next-line no-console
+  const onSubmit = (emp: Employee) => {
+    setLoading(true);
+
+    // we manage both creation and modification of the department
+    axios({
+      method: lastRouteParam === 'create' ? 'post' : 'put',
+      url: `/api/employee${lastRouteParam === 'create' ? '' : `/${lastRouteParam}`}`,
+      data: {
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        salary: emp.salary,
+        departmentId: emp.departmentId,
+      },
+    }).then(() => {
+      setSuccessSubmit(true);
+    })
+      .catch((error) => {
+        setErrorResponse({
+          error: true,
+          description: error.message,
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
+
+  if (successSubmit) {
+    return <Redirect to="/employees" />;
+  }
 
   return (
     <Card>
@@ -27,43 +86,106 @@ export function EmployeeForm(data?: Partial<EmployeeState>) {
           Here you can manage the employees.
         </Card.Text>
         <Container>
-          <Row>
-            <Col>
-              <Form>
+          <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+            <Row>
+              <Col>
                 <Form.Row>
                   <Form.Group as={Col} controlId="formGridFirstName">
                     <Form.Label>First name</Form.Label>
-                    <Form.Control name="firstName" onChange={handleInputChange} value={employee?.firstName} type="text" placeholder="Enter first name" />
+                    <Form.Control
+                      name="firstName"
+                      ref={register({ required: true })}
+                      type="text"
+                      placeholder="Enter first name"
+                      isInvalid={errors.firstName}
+                    />
+                    <Form.Control.Feedback
+                      type="invalid"
+                    >
+                      The first name is required
+                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group as={Col} controlId="formGridLastName">
                     <Form.Label>Last name</Form.Label>
-                    <Form.Control name="lastName" onChange={handleInputChange} value={employee?.lastName} type="text" placeholder="Enter last name" />
+                    <Form.Control
+                      name="lastName"
+                      ref={register({ required: true })}
+                      type="text"
+                      placeholder="Enter last name"
+                      isInvalid={errors.lastName}
+                    />
+                    <Form.Control.Feedback
+                      type="invalid"
+                    >
+                      The last name is required
+                    </Form.Control.Feedback>
                   </Form.Group>
                 </Form.Row>
-
                 <Form.Row>
-                  <Form.Group controlId="formGridSalary">
+                  <Form.Group as={Col} controlId="formGridSalary">
                     <Form.Label>Salary</Form.Label>
-                    <Form.Control value={employee?.salary} onChange={handleInputChange} placeholder="The Salary" />
+                    <Form.Control
+                      name="salary"
+                      ref={register({ required: true })}
+                      type="text"
+                      placeholder="Enter salary"
+                      isInvalid={errors.salary}
+                    />
+                    <Form.Control.Feedback
+                      type="invalid"
+                    >
+                      The salary is required
+                    </Form.Control.Feedback>
                   </Form.Group>
-                  <Form.Group as={Col} controlId="formGridState">
+
+                  <Form.Group as={Col} controlId="formGridDepartment">
                     <Form.Label>Department</Form.Label>
-                    <Form.Control as="select" defaultValue="Choose..." value={employee?.departmentId}>
-                      <option value="1">Development</option>
-                      <option value="1">Development</option>
+                    <Form.Control
+                      name="departmentId"
+                      ref={register({ required: true })}
+                      as="select"
+                      defaultValue="Choose..."
+                      isInvalid={errors.departmentId}
+                    >
+                      {
+                        departments.map((d: Department) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))
+                      }
                     </Form.Control>
+                    <Form.Control.Feedback
+                      type="invalid"
+                    >
+                      The department is required
+                    </Form.Control.Feedback>
                   </Form.Group>
                 </Form.Row>
-              </Form>
-            </Col>
-          </Row>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Button
+                  variant="primary"
+                  style={{ float: 'right' }}
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Loading…' : 'Save'}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
         </Container>
       </Card.Body>
       <Card.Footer>
-        <Button variant="primary" style={{ float: 'right' }}>
-          Save
-        </Button>
+        { errorResponse.error && (
+        <Alert variant="danger">
+          {errorResponse.description}
+        </Alert>
+        )}
       </Card.Footer>
     </Card>
   );

@@ -24,12 +24,17 @@ class EmployeeRouteTest extends TestCase
         $this->assertIsArray($jsonResponse);
         $this->assertCount(7, $jsonResponse);
 
-        $employee = $jsonResponse[0];
+        $found = false;
+        foreach ($jsonResponse as $employee) {
+            if ($employee["firstName"] === "Mike") {
+                $found = true;
+                $this->assertEquals("Preston", $employee["lastName"]);
+                $this->assertEquals(1, $employee["id"]);
+                $this->assertEquals(2, $employee["departmentId"]);
+            }
+        }
+        $this->assertTrue($found);
 
-        $this->assertEquals("Mike", $employee["firstName"]);
-        $this->assertEquals("Preston", $employee["lastName"]);
-        $this->assertEquals(1, $employee["id"]);
-        $this->assertEquals(2, $employee["departmentId"]);
     }
 
     public function testGetById()
@@ -41,7 +46,7 @@ class EmployeeRouteTest extends TestCase
         $employee = $this->parseJson($response);
 
         $this->assertIsArray($employee);
-        $this->assertCount(5, $employee);
+        $this->assertCount(6, $employee);
 
         $this->assertEquals("Mike", $employee["firstName"]);
         $this->assertEquals("Preston", $employee["lastName"]);
@@ -75,7 +80,7 @@ class EmployeeRouteTest extends TestCase
         $employee = $this->parseJson($response);
 
         $this->assertIsArray($employee);
-        $this->assertCount(5, $employee);
+        $this->assertCount(6, $employee);
 
         $this->assertEquals("Cristina", $employee["firstName"]);
         $this->assertEquals("Scabbia", $employee["lastName"]);

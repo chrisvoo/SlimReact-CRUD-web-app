@@ -37,6 +37,13 @@ class Employee implements JsonSerializable
     private $departmentId;
 
     /**
+     * Department's name.
+     *
+     * @var string|null
+     */
+    private $departmentName;
+
+    /**
      * Constructor with all the params.
      *
      * @param array  $params
@@ -46,8 +53,9 @@ class Employee implements JsonSerializable
         $this->setId($params["id"] ?? null);
         $this->setFirstName($params["firstName"] ?? null);
         $this->setLastName($params["lastName"] ?? null);
-        $this->setSalary($params["salary"] ?? null);
-        $this->setDepartmentId($params["departmentId"] ?? null);
+        $this->setSalary(isset($params["salary"]) ? floatval($params["salary"]) : null);
+        $this->setDepartmentId(isset($params["departmentId"]) ? intval($params["departmentId"]) : null);
+        $this->setDepartmentName($params["departmentName"] ?? null);
     }
 
     /**
@@ -158,6 +166,24 @@ class Employee implements JsonSerializable
     }
 
     /**
+     * @return string|null
+     */
+    public function getDepartmentName(): ?string
+    {
+        return $this->departmentName;
+    }
+
+    /**
+     * @param string|null $departmentName
+     * @return Employee
+     */
+    public function setDepartmentName(?string $departmentName): Employee
+    {
+        $this->departmentName = $departmentName;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function jsonSerialize()
@@ -167,7 +193,8 @@ class Employee implements JsonSerializable
             'firstName' => $this->firstName,
             'lastName' => $this->lastName,
             'salary' => $this->salary,
-            'departmentId' => $this->departmentId
+            'departmentId' => $this->departmentId,
+            'departmentName' => $this->departmentName,
         ];
     }
 }
