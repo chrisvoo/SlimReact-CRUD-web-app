@@ -24,8 +24,13 @@ export function EmployeeForm() {
     if (lastRouteParam !== 'create') {
       ApiCalls.getEmployee(lastRouteParam,
         (response: any) => {
-          setValue('name', response.data.name);
-          setValue('id', lastRouteParam);
+          const {
+            firstName, lastName, salary, departmentId,
+          } = response.data as Employee;
+          setValue('firstName', firstName);
+          setValue('lastName', lastName);
+          setValue('salary', salary);
+          setValue('departmentId', departmentId);
         },
         (error: Error) => {
           setErrorResponse({
