@@ -1,4 +1,6 @@
-# Chessable assignment
+# SlimReact CRUD web app
+
+This project is intended to explore an integration between Slim4 and a compiled React app.
 
 ## Requirements
 
@@ -9,7 +11,7 @@
 
 ## Main description
 
-The assignment is composed of two main parts:
+The project is composed of two main parts:
 
 * **backend**: this is a [Slim 4](https://www.slimframework.com/) REST microservice that exposes all the necessary routes for the CRUD operations on departments and employees. It has also a couple of routes for displaying the requested reports (implemented as views in MySQL)
 * **frontend**: this is a stub of a classic React app written with Typescript and created from [CRA](https://create-react-app.dev/). It uses Bootstrap 4.5 as CSS framework, bundled with [react-bootstrap](https://react-bootstrap.netlify.app/): this is a full-rewrite of Bootstrap's components in React, avoiding the jQuery and Popper dependencies (they manipulate the DOM, which would conflict with React).
@@ -60,59 +62,58 @@ The tests can be done with `npm test`, even though they're not implemented here.
 
 A possible structure of the deployed app could be the following:
 
-* create a virtual host specifying the document root. This is my example:
+```
+ubuntu@ip-172-31-43-146:/var/www/crudapp$ ll
+total 68
+drwxr-xr-x  6 ubuntu ubuntu 4096 Jan  6 18:00 ./
+drwxr-xr-x  4 root   root   4096 Feb  3 08:34 ../
+-rw-rw-r--  1 ubuntu ubuntu  166 Jan  6 18:00 .htaccess
+drwxrwxr-x  9 ubuntu ubuntu 4096 Jan  6 17:35 api/
+-rw-rw-r--  1 ubuntu ubuntu  833 Jan 15 08:26 asset-manifest.json
+drwxrwxr-x  2 ubuntu ubuntu 4096 Jan  6 17:33 css/
+-rw-rw-r--  1 ubuntu ubuntu 3870 Jan 15 08:26 favicon.ico
+drwxrwxr-x 10 ubuntu ubuntu 4096 Jan  6 17:33 fontawesome-free-5.15.1-web/
+-rw-rw-r--  1 ubuntu ubuntu 3391 Jan 15 08:33 index.html
+-rw-rw-r--  1 ubuntu ubuntu 5347 Jan 15 08:33 logo192.png
+-rw-rw-r--  1 ubuntu ubuntu 9664 Jan 15 08:33 logo512.png
+-rw-rw-r--  1 ubuntu ubuntu  492 Jan 15 08:33 manifest.json
+-rw-rw-r--  1 ubuntu ubuntu   67 Jan 15 08:33 robots.txt
+drwxrwxr-x  3 ubuntu ubuntu 4096 Jan  6 17:33 static/
+```
+
+Steps:
+
+- put the compiled react app in the root of the project
+- put an `.htaccess` file which redirects all the traffic to `/`
+
+```
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+RewriteRule ^.*$ / [L,QSA]
+```
+
+- put the Slim app inside `api` folder
+- bootstrap your Slim app inside `api/index.php`, removing the `public` dir in that directory.
+- create a virtual host specifying the document root. This is my example:
 
 ```xml
 <VirtualHost *:80>
-    ServerName chessable.lan
-    DocumentRoot /var/www/chessable
+    ServerName crudwebapp.lan
+    DocumentRoot /var/www/crudwebapp
 
-    ErrorLog /var/log/apache2/chess_error.log
-    CustomLog /var/log/apache2/chess_access.log combined
+    ErrorLog /var/log/apache2/crudwebapp_error.log
+    CustomLog /var/log/apache2/crudwebapp_access.log combined
 
     <IfModule mpm_itk_module>
         AssignUserId ccastelli ccastelli
     </IfModule>
-    <Directory /var/www/chessable>
+    <Directory /var/www/crudwebapp>
         Options -Indexes
         AllowOverride All
         Require all granted
     </Directory>
 </VirtualHost>
 ```
-
-* run `deploy.sh` script changeding the values accordingly. This will sync and copy the required files in `/var/www/chessable`. Basically the build of the frontend will be in the root, while `api` will contain the Slim app.
-* create an `.htaccess` file which redirect every request to `index.php` file:
-
-```text
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  # Everything must be redirected to index, so that even
-  # if a user points the browser to an
-  # existing file, he will get a 404
-  RewriteRule ^.*$ index.php [QSA,L]
-</IfModule>
-```
-
-If you're using an invented name like `chessable.lan`, please edit your `hosts` file, inserting a record which points to `127.0.0.1`.
-
-## Possible imporvements
-
-### Backend proposals
-
-There's no authentication/authorization system in place. A possible solution could be a classic role-based authroization system and a session-based authentication, all relying on MySQL. Currently, the backend is just a stateless microservice.
-
-### Frontend proposals
-
-The frontend is not complete of course. it's a subset of all the CRUD operations, fully implemented inside the backend. In reality it's often needed a global state management mechanism, usually provided by [React Context](https://reactjs.org/docs/context.html) or third-party modules like [Redux](https://redux.js.org/).  
-For the integration tests, a nice way could be using [Puppeteer](https://pptr.dev/) or [Cypress](https://www.cypress.io/). They both run a browser that can be instructed to perform all the necessary operations.
-
-### Deployment proposals
-
-The bash script provided in the root of the repository is just for testing purposes. You need a tool which could do the following:
-
-* deploy a stable branch of your repo.
-* can rollback a version in case you spot critical errors in your deployment.
-* avoid concurrent deployment issues.
-
-Simple and tiny solutions are [Deployer](https://deployer.org/) and [PM2](https://pm2.keymetrics.io/), that can be both configured to deploy anything you want.
