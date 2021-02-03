@@ -1,14 +1,14 @@
-DROP DATABASE IF EXISTS chessable;
+DROP DATABASE IF EXISTS crudwebapp;
 
-CREATE USER IF NOT EXISTS 'magnus'@'localhost' IDENTIFIED BY 'carlsen';
-CREATE USER IF NOT EXISTS 'magnus'@'127.0.0.1' IDENTIFIED BY 'carlsen';
+CREATE USER IF NOT EXISTS 'cruduser'@'localhost' IDENTIFIED BY 'crudpass';
+CREATE USER IF NOT EXISTS 'cruduser'@'127.0.0.1' IDENTIFIED BY 'crudpass';
 
-CREATE DATABASE chessable CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE crudwebapp CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-GRANT ALL ON chessable.* TO 'magnus'@'localhost';
-GRANT ALL ON chessable.* TO 'magnus'@'127.0.0.1';
+GRANT ALL ON crudwebapp.* TO 'cruduser'@'localhost';
+GRANT ALL ON crudwebapp.* TO 'cruduser'@'127.0.0.1';
 
-USE chessable;
+USE crudwebapp;
 
 CREATE TABLE department (
     id SERIAL,
